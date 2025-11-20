@@ -4,19 +4,16 @@ from pydantic import BaseModel, Field
 
 class QueryRequest(BaseModel):
     prompt: str = Field(
-        ..., 
+        ...,
         description="The question or prompt for the LLM",
         min_length=1,
-        max_length=10000
+        max_length=10000,
     )
     context: Optional[str] = Field(
-        None, 
-        description="Optional context for the query",
-        max_length=5000
+        None, description="Optional context for the query", max_length=5000
     )
     model: str = Field(
-        "gemini-2.0-flash-exp", 
-        description="Model to use for generation"
+        "gemini-2.0-flash-exp", description="Model to use for generation"
     )
 
 
