@@ -1,9 +1,9 @@
-from typing import Generator
+from typing import Generator, Optional
 from app.services.gemini_service import GeminiService
 from app.core.config import get_settings
 
 
-_gemini_service: GeminiService = None
+_gemini_service: Optional[GeminiService] = None
 
 
 def initialize_gemini_service() -> None:
