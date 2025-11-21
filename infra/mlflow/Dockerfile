@@ -15,6 +15,10 @@ RUN pip install --no-cache-dir \
 RUN mkdir -p /mlflow/backend /mlflow/artifacts && \
     chmod -R 777 /mlflow/backend /mlflow/artifacts
 
+# Script de health check
+RUN echo '#!/bin/bash\ncurl -f http://localhost:5000/api/2.0/mlflow/experiments/search || exit 1' > /healthcheck.sh && \
+    chmod +x /healthcheck.sh
+
 EXPOSE 5000
 
 CMD ["mlflow", "server", \

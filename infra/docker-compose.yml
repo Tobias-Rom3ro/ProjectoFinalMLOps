@@ -14,11 +14,13 @@ services:
     environment:
       - MLFLOW_ARTIFACT_ROOT=/mlflow/artifacts
     healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-        interval: 30s
-        timeout: 10s
-        retries: 5
-        start_period: 40s
+      test: ["CMD", "bash", "/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - mlops-network
 
   llm_connector:
     build:
@@ -56,6 +58,7 @@ services:
       - SERVICE_NAME=sklearn_model
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - DEBUG=${DEBUG:-False}
+      - MODEL_PATH=/service/models/wine_classifier.pkl
     volumes:
       - sklearn-models:/service/models
       - sklearn-data:/service/data
@@ -68,8 +71,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 120s  # Aumentado para dar tiempo al entrenamiento
 
   cnn_image:
     build:
@@ -99,8 +102,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 5
+      start_period: 180s  # Aumentado para dar tiempo al entrenamiento de CNN
 
   gradio_frontend:
     build:

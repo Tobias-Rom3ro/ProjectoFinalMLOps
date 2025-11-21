@@ -1,9 +1,7 @@
-# file: cnn_image/Dockerfile
 FROM python:3.10-slim
 
 WORKDIR /service
 
-# Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -19,10 +17,12 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY app/ ./app/
 COPY filters/ ./filters/
 COPY pipeline/ ./pipeline/
+COPY init-models.sh /init-models.sh
 
-# Crear directorio de modelos
-RUN mkdir -p models
+RUN mkdir -p models && \
+    chmod +x /init-models.sh
 
 EXPOSE 8002
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
+# Script que entrena el modelo antes de iniciar el servicio
+CMD ["/bin/bash", "-c", "/init-models.sh && uvicorn app.main:app --host 0.0.0.0 --port 8002"]
