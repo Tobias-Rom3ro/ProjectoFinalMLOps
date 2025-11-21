@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  mlflow:
+    build:
+      context: ./mlflow
+      dockerfile: Dockerfile
+    container_name: mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-backend:/mlflow/backend
+      - mlflow-artifacts:/mlflow/artifacts
+    environment:
+      - MLFLOW_ARTIFACT_ROOT=/mlflow/artifacts
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+        start_period: 40s
+
+  llm_connector:
+    build:
+      context: ../llm_connector
+      dockerfile: Dockerfile
+    container_name: llm_connector
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    environment:
+      - SERVICE_NAME=llm_connector
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-False}
+    networks:
+      - mlops-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  sklearn_model:
+    build:
+      context: ../sklearn_model
+      dockerfile: Dockerfile
+    container_name: sklearn_model
+    ports:
+      - "8001:8001"
+    env_file:
+      - ../.env
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SERVICE_NAME=sklearn_model
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-False}
+    volumes:
+      - sklearn-models:/service/models
+      - sklearn-data:/service/data
+    networks:
+      - mlops-network
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  cnn_image:
+    build:
+      context: ../cnn_image
+      dockerfile: Dockerfile
+    container_name: cnn_image
+    ports:
+      - "8002:8002"
+    env_file:
+      - ../.env
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - CNN_MODEL_PATH=models/mnist_cnn_model.keras
+      - IMAGE_SIZE=28
+      - NUM_CLASSES=10
+      - SERVICE_NAME=cnn_image
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-False}
+    volumes:
+      - cnn-models:/service/models
+    networks:
+      - mlops-network
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  gradio_frontend:
+    build:
+      context: ../gradio_frontend
+      dockerfile: Dockerfile
+    container_name: gradio_frontend
+    ports:
+      - "7860:7860"
+    env_file:
+      - ../.env
+    environment:
+      - LLM_CONNECTOR_URL=http://llm_connector:8000
+      - SKLEARN_MODEL_URL=http://sklearn_model:8001
+      - CNN_IMAGE_URL=http://cnn_image:8002
+      - REQUEST_TIMEOUT=30
+      - SERVICE_NAME=gradio_frontend
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-False}
+    networks:
+      - mlops-network
+    depends_on:
+      llm_connector:
+        condition: service_healthy
+      sklearn_model:
+        condition: service_healthy
+      cnn_image:
+        condition: service_healthy
+
+networks:
+  mlops-network:
+    driver: bridge
+
+volumes:
+  mlflow-backend:
+    driver: local
+  mlflow-artifacts:
+    driver: local
+  sklearn-models:
+    driver: local
+  sklearn-data:
+    driver: local
+  cnn-models:
+    driver: local
