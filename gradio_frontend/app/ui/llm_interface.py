@@ -9,49 +9,58 @@ logger = logging.getLogger(__name__)
 class LLMInterface:
     def __init__(self, llm_client: LLMClient):
         self.llm_client = llm_client
-        self.historial_chat: List[Tuple[str, str]] = []
     
     def procesar_mensaje(
         self, 
         mensaje: str, 
-        historial: List[Tuple[str, str]]
-    ) -> Tuple[List[Tuple[str, str]], str]:
+        historial: List
+    ) -> Tuple[List, str]:
+        """Procesa mensaje y devuelve historial actualizado."""
         if not mensaje or mensaje.strip() == "":
             return historial, ""
         
         try:
-            contexto = self._construir_contexto(historial)
+            # Construir contexto desde el historial
+            contexto = self._construir_contexto_desde_historial(historial)
             
+            # Obtener respuesta del LLM
             respuesta = self.llm_client.consultar(
                 pregunta=mensaje,
                 contexto=contexto
             )
             
-            historial.append((mensaje, respuesta))
+            # Agregar al historial en formato correcto
+            historial.append({"role": "user", "content": mensaje})
+            historial.append({"role": "assistant", "content": respuesta})
             
             return historial, ""
         
         except Exception as error:
             logger.error(f"Error al procesar mensaje: {error}")
             error_msg = f"Error: No se pudo procesar el mensaje. {str(error)}"
-            historial.append((mensaje, error_msg))
+            historial.append({"role": "user", "content": mensaje})
+            historial.append({"role": "assistant", "content": error_msg})
             return historial, ""
     
-    def _construir_contexto(
-        self, 
-        historial: List[Tuple[str, str]]
-    ) -> str:
-        if len(historial) < 2:
+    def _construir_contexto_desde_historial(self, historial: List) -> str:
+        """Construye contexto textual desde el historial."""
+        if not historial or len(historial) < 2:
             return ""
         
         contexto_partes = []
-        for pregunta, respuesta in historial[-3:]:
-            contexto_partes.append(f"Usuario: {pregunta}")
-            contexto_partes.append(f"Asistente: {respuesta}")
+        # Tomar últimos 6 mensajes (3 intercambios)
+        for msg in historial[-6:]:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            if role == "user":
+                contexto_partes.append(f"Usuario: {content}")
+            elif role == "assistant":
+                contexto_partes.append(f"Asistente: {content}")
         
         return "\n".join(contexto_partes)
     
-    def limpiar_historial(self) -> List[Tuple[str, str]]:
+    def limpiar_historial(self) -> List:
+        """Limpia el historial de chat."""
         logger.info("Historial de chat limpiado")
         return []
     
@@ -67,10 +76,10 @@ class LLMInterface:
                 """
             )
             
+            # Cambiar type a None (default) para compatibilidad
             chatbot = gr.Chatbot(
                 label="Conversación",
-                height=400,
-                type="messages"
+                height=400
             )
             
             with gr.Row():
@@ -93,11 +102,12 @@ class LLMInterface:
                 try:
                     salud = self.llm_client.verificar_salud()
                     return f"Estado: {salud.get('status', 'desconocido')}"
-                except:
-                    return "Estado: No disponible"
+                except Exception as e:
+                    return f"Estado: Error - {str(e)}"
             
             verificar_btn = gr.Button("Verificar estado del servicio")
             
+            # Conectar eventos
             enviar_btn.click(
                 fn=self.procesar_mensaje,
                 inputs=[mensaje_input, chatbot],
