@@ -1,0 +1,157 @@
+version: '3.8'
+
+services:
+  mlflow:
+    image: mlops-final-project_mlflow:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-backend:/mlflow/backend
+      - mlflow-artifacts:/mlflow/artifacts
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow/backend/mlflow.db
+      - MLFLOW_ARTIFACT_ROOT=/mlflow/artifacts
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow/backend/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    networks:
+      - mlops-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  llm_connector:
+    image: mlops-final-project_llm_connector:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - GENAI_API_KEY=${GENAI_API_KEY}
+      - SERVICE_NAME=llm_connector
+      - LOG_LEVEL=INFO
+      - DEBUG=False
+    networks:
+      - mlops-network
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  sklearn_model:
+    image: mlops-final-project_sklearn_model:latest
+    ports:
+      - "8001:8001"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - SERVICE_NAME=sklearn_model
+      - LOG_LEVEL=INFO
+      - DEBUG=False
+    volumes:
+      - sklearn-models:/service/models
+      - sklearn-data:/service/data
+    networks:
+      - mlops-network
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  cnn_image:
+    image: mlops-final-project_cnn_image:latest
+    ports:
+      - "8002:8002"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - CNN_MODEL_PATH=models/mnist_cnn_model.keras
+      - IMAGE_SIZE=28
+      - NUM_CLASSES=10
+      - SERVICE_NAME=cnn_image
+      - LOG_LEVEL=INFO
+      - DEBUG=False
+    volumes:
+      - cnn-models:/service/models
+    networks:
+      - mlops-network
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  gradio_frontend:
+    image: mlops-final-project_gradio_frontend:latest
+    ports:
+      - "7860:7860"
+    environment:
+      - LLM_CONNECTOR_URL=http://llm_connector:8000
+      - SKLEARN_MODEL_URL=http://sklearn_model:8001
+      - CNN_IMAGE_URL=http://cnn_image:8002
+      - REQUEST_TIMEOUT=30
+      - SERVICE_NAME=gradio_frontend
+      - LOG_LEVEL=INFO
+      - DEBUG=False
+    networks:
+      - mlops-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  mlops-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  mlflow-backend:
+  mlflow-artifacts:
+  sklearn-models:
+  sklearn-data:
+  cnn-models:

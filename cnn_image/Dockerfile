@@ -1,19 +1,27 @@
-FROM python:3.13-slim
+# file: cnn_image/Dockerfile
+FROM python:3.10-slim
 
 WORKDIR /service
 
+# Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
     libgomp1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
 COPY filters/ ./filters/
 COPY pipeline/ ./pipeline/
-COPY models/ ./models/
+
+# Crear directorio de modelos
+RUN mkdir -p models
 
 EXPOSE 8002
 

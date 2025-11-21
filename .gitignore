@@ -4,3 +4,79 @@ __pycache__
 .pytest_cache
 mlartifacts
 mlruns
+# file: .gitignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+
+# MLflow
+mlruns/
+infra/volumes/mlflow-backend/*.db
+infra/volumes/mlflow-backend/*.db-shm
+infra/volumes/mlflow-backend/*.db-wal
+infra/volumes/mlflow-artifacts/*
+
+# Model files
+*.h5
+*.keras
+*.pkl
+*.joblib
+*.pth
+sklearn_model/models/
+sklearn_model/data/
+cnn_image/models/*.keras
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Docker
+.dockerignore
+
+# Keep directory structure
+!**/.gitkeep
