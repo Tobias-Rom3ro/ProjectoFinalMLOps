@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --tb=short"
+testpaths = [
+    "llm_connector/tests",
+    "sklearn_model/tests",
+    "cnn_image/tests",
+    "gradio_frontend/tests",
+]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
