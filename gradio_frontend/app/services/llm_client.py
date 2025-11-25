@@ -30,7 +30,7 @@ class LLMClient:
             payload = {
                 "prompt": pregunta,
                 "context": contexto,
-                "model": "gemini-2.0-flash-exp"
+                "model": "gemini-2.5-flash"
             }
             
             logger.info(f"Enviando consulta al LLM: {pregunta[:50]}...")

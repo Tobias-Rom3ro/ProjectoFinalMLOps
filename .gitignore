@@ -80,3 +80,4 @@ htmlcov/
 
 # Keep directory structure
 !**/.gitkeep
+.ruff_cache

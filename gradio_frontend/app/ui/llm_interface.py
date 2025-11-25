@@ -79,7 +79,8 @@ class LLMInterface:
             # Cambiar type a None (default) para compatibilidad
             chatbot = gr.Chatbot(
                 label="Conversación",
-                height=400
+                height=400,
+                type="messages"
             )
             
             with gr.Row():

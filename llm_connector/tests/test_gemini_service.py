@@ -25,7 +25,7 @@ def test_gemini_service_generate_response(mock_genai_client):
 
     service = GeminiService(api_key="test-key")
     response = service.generate_response(
-        prompt="Test prompt", context=None, model="gemini-2.0-flash-exp"
+        prompt="Test prompt", context=None, model="gemini-2.5-flash"
     )
 
     assert response == "This is a test response"
@@ -41,7 +41,7 @@ def test_gemini_service_generate_response_with_context(mock_genai_client):
 
     service = GeminiService(api_key="test-key")
     response = service.generate_response(
-        prompt="Test prompt", context="Test context", model="gemini-2.0-flash-exp"
+        prompt="Test prompt", context="Test context", model="gemini-2.5-flash"
     )
 
     assert response == "Response with context"

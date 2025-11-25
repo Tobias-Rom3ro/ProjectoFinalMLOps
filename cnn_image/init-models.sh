@@ -5,13 +5,15 @@ echo "========================================"
 echo "Inicializando modelo CNN"
 echo "========================================"
 
-# Esperar a que MLflow esté disponible
 echo "Esperando MLflow..."
-until curl -f http://mlflow:5000/api/2.0/mlflow/experiments/search 2>/dev/null; do
+until curl -fs -X POST http://mlflow:5000/api/2.0/mlflow/experiments/search \
+  -H "Content-Type: application/json" \
+  -d '{"max_results": 1}' >/dev/null; do
     echo "MLflow no disponible, reintentando..."
     sleep 5
 done
 echo "✓ MLflow disponible"
+
 
 # Entrenar modelo CNN
 echo ""
