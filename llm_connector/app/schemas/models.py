@@ -13,7 +13,7 @@ class QueryRequest(BaseModel):
         None, description="Optional context for the query", max_length=5000
     )
     model: str = Field(
-        "gemini-2.0-flash-exp", description="Model to use for generation"
+        "gemini-2.5-flash", description="Model to use for generation"
     )
 
 

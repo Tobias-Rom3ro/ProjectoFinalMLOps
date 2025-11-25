@@ -24,7 +24,7 @@ class GeminiService:
         self,
         prompt: str,
         context: Optional[str] = None,
-        model: str = "gemini-2.0-flash-exp",
+        model: str = "gemini-2.5-flash",
     ) -> str:
         if not self.client:
             logger.error("Gemini client is not initialized")
